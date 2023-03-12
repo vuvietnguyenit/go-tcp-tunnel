@@ -1,0 +1,17 @@
+[
+    {
+        "name": "netcat sample",
+        "source_port": "4000",
+        "dest": "10.51.78.127:4000"
+    },
+    {
+        "name": "netcat sample 1",
+        "source_port": "4001",
+        "dest": "10.51.78.127:4000"
+    },
+    {
+        "name": "netcat sample 2",
+        "source_port": "4011",
+        "dest": "10.51.78.127:4000"
+    }
+]
