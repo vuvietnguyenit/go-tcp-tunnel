@@ -1,0 +1,17 @@
+[
+    {
+        "name": "netcat",
+        "source_port": "4000",
+        "dest": "10.51.78.127:4000"
+    },
+    {
+        "name": "mysql",
+        "source_port": "4001",
+        "dest": "10.51.78.127:3306"
+    },
+    {
+        "name": "service 1",
+        "source_port": "3333",
+        "dest": "10.51.78.127:8000"
+    }
+]

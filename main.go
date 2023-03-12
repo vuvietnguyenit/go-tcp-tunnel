@@ -15,7 +15,7 @@ func init() {
 	// Check socat exists
 	var out strings.Builder
 
-	cmdCheckSocatExists := exec.Command("socats", "-V")
+	cmdCheckSocatExists := exec.Command("socat", "-V")
 	cmdCheckSocatExists.Stdout = &out
 	err := cmdCheckSocatExists.Run()
 	if err != nil {
