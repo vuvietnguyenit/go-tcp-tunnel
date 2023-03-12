@@ -9,12 +9,12 @@ Socat installed for machine.
 ## Usage
 
 ```sh
-./go-tcp-tunnel [<json_dataset_file>]
+./go-tcp-tunnel-linux_x86_64 [<json_dataset_file>]
 ```
 Eg:
 
 ```sh
-./go-tcp-tunnel example/example_dataset.json
+./go-tcp-tunnel-linux_x86_64 example/example_dataset.json
 ```
 
 _**Output**_

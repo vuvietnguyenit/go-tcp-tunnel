@@ -15,5 +15,4 @@
 # vendor/
 
 .vscode/
-go-tcp-tunnel
-go-tcp-tunnel_x86_64
+go-tcp-tunnel-*
