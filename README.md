@@ -28,7 +28,7 @@ _**Output**_
 2023/03/12 12:01:25 -> Forward [service 1] done.
 ```
 
-**Example dataset forwarding**
+**Example dataset port forwarding**
 
 _example_dataset.json_
 
