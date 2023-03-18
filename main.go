@@ -1,11 +1,10 @@
 package main
 
 import (
-	"embed"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
-	"io/fs"
 	"io/ioutil"
 	"log"
 	"os"
@@ -13,19 +12,27 @@ import (
 	"strings"
 )
 
-//go:embed sh/*
-var bash embed.FS
+var scriptCheckPort = `
+	#!/bin/sh
+	port=%s
+	cmd=$(ss -tlnp | awk '{print $4}' | grep :$port)
+	if [ -n "$cmd" ]; then
+		# Port is running
+		echo "PORT_IS_RUNNING"
+	else
+		# Port is not running:
+		echo "PORT_IS_NOT_RUNNING"
+	fi
+	`
 
-//go:embed sh/socat_forward.sh
-var scriptSocatForward string
-
-func openBash(filepath string) (fs.File, error) {
-	f, err := bash.Open(filepath)
-	if err != nil {
-		return nil, err
-	}
-	return f, nil
-}
+var scriptForwardPort = `
+	#!/bin/sh
+	source=%s
+	dest=%s
+	desc=%s
+	# Example: socat TCP4-LISTEN:4000,fork,reuseaddr TCP4:10.51.78.127:4000 &
+	socat TCP4-LISTEN:$source,fork,reuseaddr TCP4:$dest &
+`
 
 func init() {
 	// Check socat exists
@@ -86,16 +93,19 @@ func getInput() string {
 // Function to check port number is running is Linux system
 func executeCommandCheckRunningPort(port string) error {
 	// Execute command bash
-	bashCheckPortRunningFile, err := openBash("sh/check_port_running.sh")
+	var outputCode strings.Builder
+	commandCreated := fmt.Sprintf(scriptCheckPort, port)
+	cmd := exec.Command("/bin/sh")
+	cmd.Stdin = strings.NewReader(commandCreated)
+	cmd.Stdout = &outputCode
+	err := cmd.Run()
 	if err != nil {
 		return err
 	}
-	cmd := exec.Command("bash")
-	cmd.Stdin = bashCheckPortRunningFile
-	cmd.Stdout = os.Stdout
-	err = cmd.Run()
-	if err != nil {
-		return err
+	result := outputCode.String()
+	if result == "PORT_IS_RUNNING\n" {
+		errmsg := fmt.Sprintf("Port %s is already used. \n", port)
+		return errors.New(errmsg)
 	}
 	return nil
 }
@@ -110,11 +120,16 @@ func startForward(forwardData ForwardData) {
 	)
 	err := executeCommandCheckRunningPort(forwardData.SourcePort)
 	if err != nil {
-		log.Printf("Error %v \n", err)
+		log.Printf("Error: %v \n", err)
 		return
 	}
-	cmd := exec.Command(scriptSocatForward, forwardData.SourcePort, forwardData.Dest)
-	cmd.Stdout = os.Stdout
+	var output strings.Builder
+	// Create shell command
+	commandCreated := fmt.Sprintf(scriptForwardPort, forwardData.SourcePort, forwardData.Dest, forwardData.Name)
+
+	cmd := exec.Command("/bin/sh")
+	cmd.Stdin = strings.NewReader(commandCreated)
+	cmd.Stdout = &output
 	err = cmd.Start()
 	if err != nil {
 		log.Println(err)
