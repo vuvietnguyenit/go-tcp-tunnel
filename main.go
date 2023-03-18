@@ -1,15 +1,31 @@
 package main
 
 import (
+	"embed"
 	"encoding/json"
 	"errors"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
 )
+
+//go:embed sh/*
+var bash embed.FS
+
+//go:embed sh/socat_forward.sh
+var scriptSocatForward string
+
+func openBash(filepath string) (fs.File, error) {
+	f, err := bash.Open(filepath)
+	if err != nil {
+		return nil, err
+	}
+	return f, nil
+}
 
 func init() {
 	// Check socat exists
@@ -68,17 +84,20 @@ func getInput() string {
 }
 
 // Function to check port number is running is Linux system
-func executeCommandCheckRunningPort(port string) bool {
-	var out strings.Builder
-	cmdCheckPortRunning := exec.Command("./sh/check_port_running.sh", port)
-	cmdCheckPortRunning.Stdout = &out
-	err := cmdCheckPortRunning.Run()
+func executeCommandCheckRunningPort(port string) error {
+	// Execute command bash
+	bashCheckPortRunningFile, err := openBash("sh/check_port_running.sh")
 	if err != nil {
-		log.Println(err)
-		// Port is running
-		return true
+		return err
 	}
-	return false
+	cmd := exec.Command("bash")
+	cmd.Stdin = bashCheckPortRunningFile
+	cmd.Stdout = os.Stdout
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Function to check port is valid and using socat to
@@ -89,14 +108,14 @@ func startForward(forwardData ForwardData) {
 		forwardData.SourcePort,
 		forwardData.Name,
 	)
-	portIsRunning := executeCommandCheckRunningPort(forwardData.SourcePort)
-	if portIsRunning {
-		log.Printf("port %s is already use", forwardData.SourcePort)
+	err := executeCommandCheckRunningPort(forwardData.SourcePort)
+	if err != nil {
+		log.Printf("Error %v \n", err)
 		return
 	}
-	cmd := exec.Command("./sh/socat_forward.sh", forwardData.SourcePort, forwardData.Dest)
+	cmd := exec.Command(scriptSocatForward, forwardData.SourcePort, forwardData.Dest)
 	cmd.Stdout = os.Stdout
-	err := cmd.Start()
+	err = cmd.Start()
 	if err != nil {
 		log.Println(err)
 	}
