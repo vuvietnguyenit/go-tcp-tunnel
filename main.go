@@ -30,8 +30,7 @@ var scriptForwardPort = `
 	source=%s
 	dest=%s
 	desc=%s
-	# Example: socat TCP4-LISTEN:4000,fork,reuseaddr TCP4:10.51.78.127:4000 &
-	socat TCP4-LISTEN:$source,fork,reuseaddr TCP4:$dest &
+	socat TCP4-LISTEN:$source,fork,reuseaddr TCP4:$dest > /dev/null 2>&1 &
 `
 
 func init() {
@@ -123,14 +122,12 @@ func startForward(forwardData ForwardData) {
 		log.Printf("Error: %v \n", err)
 		return
 	}
-	var output strings.Builder
 	// Create shell command
 	commandCreated := fmt.Sprintf(scriptForwardPort, forwardData.SourcePort, forwardData.Dest, forwardData.Name)
 
 	cmd := exec.Command("/bin/sh")
 	cmd.Stdin = strings.NewReader(commandCreated)
-	cmd.Stdout = &output
-	err = cmd.Start()
+	err = cmd.Run()
 	if err != nil {
 		log.Println(err)
 	}

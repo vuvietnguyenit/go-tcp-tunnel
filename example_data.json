@@ -1,7 +1,12 @@
 [
     {
         "name": "kafka-ui",
-        "source_port": "8080",
+        "source_port": "8085",
         "dest": "10.8.103.189:8080"
+    },
+    {
+        "name": "kafka-broker",
+        "source_port": "8084",
+        "dest": "10.8.103.189:8081"
     }
 ]
